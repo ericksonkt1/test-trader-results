@@ -2,40 +2,98 @@
   "data_dir": "/data",
   "start": "2018-01-01",
   "oos_fraction": 0.3,
-
   "universe": {
-    "sources": ["IJH", "IJR"],
-    "refresh_from_ishares": false,
-    "exclude": [],
+    "sources": [
+      "IJH",
+      "IJR"
+    ],
+    "refresh": "wikipedia",
+    "exclude": [
+      "CWEN-A"
+    ],
     "min_price": 5,
     "min_adv_usd": 10000000
   },
-
+  "earnings": {
+    "refresh_days": 7,
+    "max_refresh_per_run": 250,
+    "workers": 4
+  },
   "capital": 10000,
   "risk_per_trade": 0.01,
   "max_positions": 6,
   "max_position_pct": 0.25,
   "slippage_bps": 15,
   "earnings_blackout_days": 3,
-
-  "walk_forward": { "train_days": 504, "test_days": 126 },
+  "walk_forward": {
+    "train_days": 504,
+    "test_days": 126
+  },
   "monte_carlo_runs": 1000,
   "min_score": 18,
   "min_oos_trades": 30,
-
   "strategies": {
     "earnings_drift": {
       "enabled": true,
       "earnings_source": "yfinance",
-      "grid": { "gap_min": [0.03, 0.05], "vol_mult": [2.0, 3.0], "max_hold": [5, 10], "stop_atr": [2.0], "exit_low": [10] }
+      "grid": {
+        "gap_min": [
+          0.03,
+          0.05
+        ],
+        "vol_mult": [
+          2.0,
+          3.0
+        ],
+        "max_hold": [
+          5,
+          10
+        ],
+        "stop_atr": [
+          2.0
+        ],
+        "exit_low": [
+          10
+        ]
+      }
     },
     "volume_breakout": {
       "enabled": true,
-      "grid": { "lookback": [20, 50], "vol_mult": [1.5, 2.0], "max_hold": [10], "stop_atr": [2.0], "exit_low": [10] }
+      "grid": {
+        "lookback": [
+          20,
+          50
+        ],
+        "vol_mult": [
+          1.5,
+          2.0
+        ],
+        "max_hold": [
+          10
+        ],
+        "stop_atr": [
+          2.0
+        ],
+        "exit_low": [
+          10
+        ]
+      }
     },
     "pullback_reversion": {
       "enabled": true,
-      "grid": { "rsi_max": [5, 10], "max_hold": [5, 10], "stop_atr": [2.5] }
+      "grid": {
+        "rsi_max": [
+          5,
+          10
+        ],
+        "max_hold": [
+          5,
+          10
+        ],
+        "stop_atr": [
+          2.5
+        ]
+      }
     }
   }
 }

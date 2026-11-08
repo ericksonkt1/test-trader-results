@@ -1,0 +1,69 @@
+name: Strategist nightly backtest
+
+# Sun–Thu nights ~21:07 PT (05:07 UTC Mon–Fri; 22:07 PT during daylight time).
+# GitHub cron is UTC only, and scheduled runs can start a few minutes late.
+on:
+  schedule:
+    - cron: "7 5 * * 1-5"
+  workflow_dispatch: {}
+
+permissions:
+  contents: write   # commit results back to this repo with the built-in token
+
+concurrency:
+  group: strategist
+  cancel-in-progress: false
+
+jobs:
+  backtest:
+    runs-on: ubuntu-latest
+    timeout-minutes: 300
+    env:
+      TZ: America/Los_Angeles
+      DATA_DIR: ${{ github.workspace }}/data
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+          cache: pip
+
+      - run: pip install -r requirements.txt
+
+      # Prices, earnings dates and the universe persist between runs here.
+      # A new cache entry is saved every run; the newest one is restored.
+      - name: Restore data cache
+        uses: actions/cache/restore@v4
+        with:
+          path: data
+          key: strategist-data-${{ github.run_id }}
+          restore-keys: strategist-data-
+
+      - name: Run Strategist
+        run: python -m strategist.run --config config.json
+
+      - name: Save data cache
+        if: always()
+        uses: actions/cache/save@v4
+        with:
+          path: data
+          key: strategist-data-${{ github.run_id }}
+
+      - name: Commit results
+        run: |
+          latest_dir=$(ls -d data/results/20*/ | sort | tail -1)
+          name=$(basename "$latest_dir")
+          mkdir -p results
+          rm -rf "results/$name"
+          cp -r "$latest_dir" "results/$name"
+          cp "$latest_dir/report.md" latest.md
+          git config user.name "strategist-bot"
+          git config user.email "strategist-bot@users.noreply.github.com"
+          git add latest.md results
+          if git diff --cached --quiet; then
+            echo "No changes"
+          else
+            git commit -m "Strategist run $name"
+            git push
+          fi

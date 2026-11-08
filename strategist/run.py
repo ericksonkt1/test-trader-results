@@ -20,6 +20,7 @@ import json
 import logging
 import os
 import shutil
+import time
 from datetime import datetime
 
 import numpy as np
@@ -201,7 +202,9 @@ def main():
     args = ap.parse_args()
     logging.basicConfig(level=logging.INFO, format="%(asctime)s %(name)s %(message)s")
     cfg = json.load(open(args.config))
+    cfg["data_dir"] = os.environ.get("DATA_DIR", cfg["data_dir"])  # GitHub Actions: ./data
     os.makedirs(cfg["data_dir"], exist_ok=True)
+    t_start = time.time()
 
     # ---- 1. data
     if args.synthetic:
@@ -233,8 +236,10 @@ def main():
             continue
         for k, p in enumerate(expand_grid(scfg["grid"])):
             log.info("Simulating %s variant %d: %s", name, k, p)
+            t0 = time.time()
             sig = build_signals(name, p, prices, earnings, cfg, usable)
             eq, tr = simulate(prices, sig, cfg, calendar)
+            log.info("  %d trades, %.1fs", len(tr), time.time() - t0)
             ret = S.daily_returns(eq)
             runs[(name, k)] = {"params": p, "equity": eq, "trades": tr, "ret": ret,
                                "is_sharpe": S.sharpe(ret[is_start:is_end])}
@@ -308,7 +313,8 @@ def main():
         json.dump({"meta": meta, "results": results}, f, indent=2, default=str)
     latest = os.path.join(cfg["data_dir"], "results", "latest.md")
     shutil.copyfile(os.path.join(out_dir, "report.md"), latest)
-    log.info("Done. Report: %s", os.path.join(out_dir, "report.md"))
+    log.info("Done in %.1f min. Report: %s", (time.time() - t_start) / 60,
+             os.path.join(out_dir, "report.md"))
 
 
 if __name__ == "__main__":

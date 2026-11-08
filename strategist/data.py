@@ -43,29 +43,74 @@ def _parse_ishares_csv(text):
     return sorted({t.replace(".", "-") for t in tickers if t and t != "-"})
 
 
+WIKI_PAGES = {"IJH": "List_of_S%26P_400_companies", "IJR": "List_of_S%26P_600_companies"}
+WIKI_HEADERS = {"User-Agent": "Mozilla/5.0 (test-trader strategist; research backtest)"}
+
+
+def _wikipedia_universe(funds):
+    """Current S&P 400 / 600 members from Wikipedia (same indexes IJH / IJR track)."""
+    tickers = set()
+    for fund in funds:
+        page = WIKI_PAGES[fund]
+        r = requests.get("https://en.wikipedia.org/wiki/" + page, headers=WIKI_HEADERS, timeout=30)
+        r.raise_for_status()
+        found = None
+        for df in pd.read_html(io.StringIO(r.text)):
+            col = next((c for c in df.columns
+                        if str(c).strip() in ("Symbol", "Ticker symbol", "Ticker")), None)
+            if col is not None:
+                found = {str(x).strip().replace(".", "-") for x in df[col]}
+                break
+        if not found:
+            raise RuntimeError(f"no ticker table on {page}")
+        log.info("Universe: %d tickers from Wikipedia %s", len(found), page)
+        tickers |= found
+    tickers = {t for t in tickers if t.replace("-", "").isalpha()}
+    if len(tickers) < 500:
+        raise RuntimeError(f"only {len(tickers)} tickers parsed; refusing to use it")
+    return sorted(tickers)
+
+
+def _ishares_universe(funds, data_dir):
+    tickers = set()
+    for fund in funds:
+        try:
+            r = requests.get(ISHARES_URLS[fund], headers=HEADERS, timeout=30)
+            r.raise_for_status()
+            tickers |= set(_parse_ishares_csv(r.text))
+            log.info("Universe: %s holdings loaded", fund)
+        except Exception as e:  # noqa: BLE001
+            log.warning("Could not fetch %s holdings (%s). Put a universe.csv in %s.",
+                        fund, e, data_dir)
+    return sorted(tickers)
+
+
 def load_universe(cfg):
+    """
+    universe.refresh: "wikipedia" (default) | "ishares" | "never".
+    A refresh that fails falls back to the last good universe.csv.
+    """
     data_dir = cfg["data_dir"]
     path = os.path.join(data_dir, "universe.csv")
     ucfg = cfg["universe"]
     exclude = {t.upper() for t in ucfg.get("exclude", [])}
+    funds = ucfg.get("sources", ["IJH", "IJR"])
+    mode = ucfg.get("refresh", "ishares" if ucfg.get("refresh_from_ishares") else "wikipedia")
 
-    if os.path.exists(path) and not ucfg.get("refresh_from_ishares", False):
+    tickers = []
+    if mode == "wikipedia":
+        try:
+            tickers = _wikipedia_universe(funds)
+        except Exception as e:  # noqa: BLE001
+            log.warning("Wikipedia universe refresh failed (%s); using last universe.csv", e)
+    elif mode == "ishares":
+        tickers = _ishares_universe(funds, data_dir)
+    if tickers:
+        pd.DataFrame({"ticker": tickers}).to_csv(path, index=False)
+    elif os.path.exists(path):
         tickers = pd.read_csv(path)["ticker"].astype(str).str.upper().tolist()
     else:
-        tickers = set()
-        for fund in ucfg.get("sources", ["IJH", "IJR"]):
-            try:
-                r = requests.get(ISHARES_URLS[fund], headers=HEADERS, timeout=30)
-                r.raise_for_status()
-                tickers |= set(_parse_ishares_csv(r.text))
-                log.info("Universe: %s holdings loaded", fund)
-            except Exception as e:  # noqa: BLE001
-                log.warning("Could not fetch %s holdings (%s). Put a universe.csv in %s.",
-                            fund, e, data_dir)
-        tickers = sorted(tickers)
-        if not tickers:
-            raise SystemExit("No universe. Create /data/universe.csv with a 'ticker' column.")
-        pd.DataFrame({"ticker": tickers}).to_csv(path, index=False)
+        raise SystemExit(f"No universe. Create {path} with a 'ticker' column.")
 
     tickers = [t for t in tickers if t not in exclude]
     log.info("Universe size after exclusions: %d", len(tickers))
@@ -126,26 +171,54 @@ def load_earnings(tickers, cfg):
       announced before 09:30 ET -> same day; otherwise -> next trading day.
     """
     import yfinance as yf
+    from concurrent.futures import ThreadPoolExecutor
 
     edir = os.path.join(cfg["data_dir"], "earnings")
     os.makedirs(edir, exist_ok=True)
-    out = {}
-    for n, t in enumerate(tickers):
+    ecfg = cfg.get("earnings", {})
+    max_age_h = 24 * ecfg.get("refresh_days", 7)
+    cap = ecfg.get("max_refresh_per_run", 250)
+    workers = ecfg.get("workers", 4)
+
+    def fetch(t):
         p = os.path.join(edir, f"{t}.csv")
-        if not _fresh(p, 24 * 7):
-            try:
-                ed = yf.Ticker(t).get_earnings_dates(limit=40)
-                if ed is not None and len(ed):
-                    ed = ed.reset_index()
-                    ed.columns = [str(c) for c in ed.columns]
-                    ed.to_csv(p, index=False)
-                else:
-                    pd.DataFrame().to_csv(p, index=False)
-            except Exception:  # noqa: BLE001
-                pd.DataFrame().to_csv(p, index=False)
-            time.sleep(0.4)
+        try:
+            ed = yf.Ticker(t).get_earnings_dates(limit=40)
+            if ed is not None and len(ed):
+                ed = ed.reset_index()
+                ed.columns = [str(c) for c in ed.columns]
+                ed.to_csv(p, index=False)
+                return True
+        except Exception:  # noqa: BLE001
+            if os.path.exists(p):  # keep the last good file; retry next run
+                return False
+        pd.DataFrame().to_csv(p, index=False)
+        return False
+
+    # Missing files are always fetched. Stale ones are refreshed oldest-first, capped per run,
+    # so the weekly refresh is spread over several nights instead of one 2-hour run.
+    missing = [t for t in tickers if not os.path.exists(os.path.join(edir, f"{t}.csv"))]
+    miss_set = set(missing)
+    stale = sorted((t for t in tickers if t not in miss_set
+                    and not _fresh(os.path.join(edir, f"{t}.csv"), max_age_h)),
+                   key=lambda t: os.path.getmtime(os.path.join(edir, f"{t}.csv")))
+    todo = missing + stale[:max(0, cap - len(missing))]
+    log.info("Earnings dates: %d missing, %d stale, fetching %d", len(missing), len(stale), len(todo))
+    t0 = time.time()
+    ok = 0
+    with ThreadPoolExecutor(max_workers=workers) as ex:
+        for n, res in enumerate(ex.map(fetch, todo), 1):
+            ok += bool(res)
             if n % 100 == 0:
-                log.info("Earnings dates: %d/%d", n, len(tickers))
+                log.info("Earnings dates: %d/%d fetched (%.0fs)", n, len(todo), time.time() - t0)
+    if todo:
+        log.info("Earnings fetch done: %d/%d with data in %.0fs", ok, len(todo), time.time() - t0)
+
+    out = {}
+    for t in tickers:
+        p = os.path.join(edir, f"{t}.csv")
+        if not os.path.exists(p):
+            continue
         try:
             ed = pd.read_csv(p)
         except pd.errors.EmptyDataError:
