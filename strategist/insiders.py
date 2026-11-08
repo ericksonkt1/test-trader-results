@@ -110,6 +110,9 @@ def load_insiders(tickers, cfg):
     """Returns {ticker: DataFrame[filing_date, owner, value]} of Director/Officer open-market buys."""
     idir = os.path.join(cfg["data_dir"], "insiders")
     os.makedirs(idir, exist_ok=True)
+    ua = os.environ.get("SEC_USER_AGENT") or cfg.get("sec_user_agent")
+    if ua:
+        HEADERS["User-Agent"] = ua
     start_year = int(cfg["start"][:4])
     frames, got, missing = [], 0, []
     qs = list(_quarters(start_year))
