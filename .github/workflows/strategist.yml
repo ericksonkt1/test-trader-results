@@ -21,6 +21,9 @@ jobs:
     env:
       TZ: America/Los_Angeles
       DATA_DIR: ${{ github.workspace }}/data
+      # SEC requires a real contact in the User-Agent: repo Settings > Secrets and variables >
+      # Actions > Variables > SEC_USER_AGENT = "TestTrader Your Name you@example.com"
+      SEC_USER_AGENT: ${{ vars.SEC_USER_AGENT }}
     steps:
       - uses: actions/checkout@v4
 
