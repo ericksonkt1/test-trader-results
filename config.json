@@ -94,6 +94,32 @@
           2.5
         ]
       }
+    },
+    "insider_cluster": {
+      "enabled": true,
+      "source": "SEC Insider Transactions Data Sets (quarterly)",
+      "grid": {
+        "min_insiders": [
+          2,
+          3
+        ],
+        "window_days": [
+          10
+        ],
+        "min_value": [
+          100000
+        ],
+        "max_hold": [
+          5,
+          10
+        ],
+        "stop_atr": [
+          2.0
+        ],
+        "exit_low": [
+          10
+        ]
+      }
     }
   }
 }

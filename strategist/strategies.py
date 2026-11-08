@@ -116,10 +116,57 @@ def pullback_reversion(df, p, cfg, earn=None):
     return _frame(df, sig, stop, limit, exit_sig, -r, p["max_hold"])
 
 
+# --------------------------------------------------------------------------- 4. insider cluster buys
+def cluster_events(ins, index, window_days, min_insiders):
+    """
+    On each session that has a filing: distinct Director/Officer buyers and $ bought across filings
+    dated (t - window_days, t]. Returns (first_cross: bool Series, value: float Series). first_cross
+    is True only when today's filings lift the count to min_insiders (it was below before today).
+    """
+    cross = pd.Series(False, index=index)
+    val = pd.Series(0.0, index=index)
+    if ins is None or len(ins) == 0:
+        return cross, val
+    fd = pd.DatetimeIndex(ins["filing_date"]).normalize().values
+    owners = ins["owner"].astype(str).values
+    vals = ins["value"].values.astype(float)
+    pos = index.searchsorted(fd)            # filing after the close of a holiday -> next session
+    for k in np.unique(pos[pos < len(index)]):
+        d = index.values[k]
+        lo = d - np.timedelta64(window_days, "D")
+        win = (fd > lo) & (fd <= d)
+        before = win & (pos < k)
+        n_now, n_before = len(set(owners[win])), len(set(owners[before]))
+        if n_now >= min_insiders > n_before:
+            cross.iloc[k] = True
+        val.iloc[k] = float(vals[win].sum())
+    return cross, val
+
+
+def insider_cluster(df, p, cfg, earn=None):
+    """
+    Insider cluster buying. Thesis: when several officers/directors buy their own stock on the
+    open market within days, they're signalling undervaluation with their own money; small caps
+    are thinly covered, so the market prices it in slowly.
+    Other side: sellers who don't have the insiders' information; underweight analysts.
+    Event: on a Form 4 filing date, the count of distinct Director/Officer buyers in the last
+    window_days reaches min_insiders (first crossing only) with >= min_value bought in total.
+    `earn` here is the ticker's insider-purchase table (filing_date, owner, value).
+    """
+    a = atr(df)
+    cross, v = cluster_events(earn, df.index, p["window_days"], p["min_insiders"])
+    sig = cross & (v >= p["min_value"]) & liquid(df, cfg)
+    stop = p["stop_atr"] * a
+    limit = df["close"] * (1 + p.get("limit_buffer", 0.01))
+    exit_sig = df["close"] < df["close"].rolling(p.get("exit_low", 10)).min().shift(1)
+    return _frame(df, sig, stop, limit, exit_sig, np.log1p(v), p["max_hold"])
+
+
 STRATEGIES = {
     "earnings_drift": earnings_drift,
     "volume_breakout": volume_breakout,
     "pullback_reversion": pullback_reversion,
+    "insider_cluster": insider_cluster,
 }
 
 THESIS = {
@@ -131,6 +178,9 @@ THESIS = {
     "pullback_reversion": ("Sharp 2-day selloffs in healthy uptrends are forced/emotional "
                            "selling that reverts within days.",
                            "Panic sellers and stop-loss cascades."),
+    "insider_cluster": ("Several officers/directors buying their own stock on the open market "
+                        "within days signals undervaluation; thinly covered small caps price it in slowly.",
+                        "Sellers without the insiders' information; analysts slow to notice."),
 }
 
 
@@ -144,6 +194,13 @@ def describe_rules(name, p):
     if name == "volume_breakout":
         return (f"ENTRY: close > prior {p['lookback']}-day high, volume >= {p['vol_mult']}x 50-day "
                 f"avg, close > 200SMA, 50SMA > 200SMA -> buy-limit next open at <= signal close "
+                f"+{p.get('limit_buffer', 0.01):.0%}. STOP: entry - {p['stop_atr']} x ATR(14). "
+                f"EXIT: close below {p.get('exit_low', 10)}-day low (next open) or after "
+                f"{p['max_hold']} sessions.")
+    if name == "insider_cluster":
+        return (f"ENTRY: on a Form 4 filing date, >= {p['min_insiders']} distinct Directors/Officers "
+                f"have filed open-market buys in the last {p['window_days']} days totalling >= "
+                f"${p['min_value']:,.0f} (first crossing) -> buy-limit next open at <= signal close "
                 f"+{p.get('limit_buffer', 0.01):.0%}. STOP: entry - {p['stop_atr']} x ATR(14). "
                 f"EXIT: close below {p.get('exit_low', 10)}-day low (next open) or after "
                 f"{p['max_hold']} sessions.")

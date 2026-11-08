@@ -27,6 +27,7 @@ import numpy as np
 import pandas as pd
 
 from . import data as D
+from . import insiders as INS
 from . import stats as S
 from .engine import simulate
 from .strategies import STRATEGIES, THESIS, describe_rules
@@ -39,14 +40,15 @@ def expand_grid(grid):
     return [dict(zip(keys, vals)) for vals in itertools.product(*(grid[k] for k in keys))]
 
 
-def build_signals(name, params, prices, earnings, cfg, universe):
+def build_signals(name, params, prices, earnings, cfg, universe, insiders=None):
     fn, out = STRATEGIES[name], {}
+    side = insiders if name == "insider_cluster" else earnings
     bdays = cfg.get("earnings_blackout_days", 3)
     for t in universe:
         df = prices.get(t)
         if df is None or len(df) < 260:
             continue
-        s = fn(df, params, cfg, earnings.get(t))
+        s = fn(df, params, cfg, (side or {}).get(t))
         if name != "earnings_drift" and t in earnings:
             # Desk Rule: never launch a position into that stock's earnings
             s["signal"] &= ~D.upcoming_earnings_mask(earnings[t], df.index, bdays).values
@@ -136,6 +138,7 @@ def write_report(results, meta, out_dir):
           f"- Data: {meta['source']}, {meta['start']} → {meta['end']}, "
           f"{meta['universe_n']} tickers with usable history, earnings dates for "
           f"{meta.get('earnings_n', 0)}",
+          f"- Insider data (SEC Form 4 data sets): {json.dumps(meta.get('insiders', {}))}",
           f"- In-sample: {meta['is_start']} → {meta['is_end']} · Out-of-sample: "
           f"{meta['oos_start']} → {meta['end']}",
           f"- Variants tested tonight (counted for deflated Sharpe): {meta['n_trials']}",
@@ -212,6 +215,7 @@ def main():
         prices = D.synthetic_prices(start=cfg["start"])
         universe = [t for t in prices if t.startswith("SYN")]
         earnings, source = {}, "SYNTHETIC random walk"
+        insiders, ins_meta = INS.synthetic_insiders(prices), {"quarters": "synthetic"}
         cfg["strategies"]["earnings_drift"]["earnings_source"] = "gap_proxy"
     else:
         universe = D.load_universe(cfg)
@@ -219,6 +223,9 @@ def main():
         need_earn = any(s.get("enabled") for s in cfg["strategies"].values())
         earnings = D.load_earnings([t for t in universe if t in prices], cfg) if need_earn else {}
         source = "Yahoo Finance via yfinance (adjusted daily bars)"
+        insiders, ins_meta = {}, {}
+        if cfg["strategies"].get("insider_cluster", {}).get("enabled"):
+            insiders, ins_meta = INS.load_insiders([t for t in universe if t in prices], cfg)
     bench = prices.get("IWM")
     if bench is None:
         raise SystemExit("IWM benchmark missing; it's needed for the calendar and regimes.")
@@ -238,7 +245,7 @@ def main():
         for k, p in enumerate(expand_grid(scfg["grid"])):
             log.info("Simulating %s variant %d: %s", name, k, p)
             t0 = time.time()
-            sig = build_signals(name, p, prices, earnings, cfg, usable)
+            sig = build_signals(name, p, prices, earnings, cfg, usable, insiders)
             eq, tr = simulate(prices, sig, cfg, calendar)
             log.info("  %d trades, %.1fs", len(tr), time.time() - t0)
             ret = S.daily_returns(eq)
@@ -259,7 +266,7 @@ def main():
         oos_stats = S.period_stats(b["equity"], b["trades"], oos_start, end)
 
         log.info("Stress test %s (2x slippage, 1 bar late)", name)
-        sig = build_signals(name, b["params"], prices, earnings, cfg, usable)
+        sig = build_signals(name, b["params"], prices, earnings, cfg, usable, insiders)
         eq_s, tr_s = simulate(prices, sig, cfg, calendar, slip_mult=2.0, delay=1)
         stress = S.period_stats(eq_s, tr_s, oos_start, end)
 
@@ -301,7 +308,7 @@ def main():
             "start": str(calendar[0].date()), "end": str(end.date()),
             "is_start": str(is_start.date()), "is_end": str(is_end.date()),
             "oos_start": str(oos_start.date()), "universe_n": len(usable), "n_trials": n_trials,
-            "earnings_n": sum(1 for t in usable if t in earnings),
+            "earnings_n": sum(1 for t in usable if t in earnings), "insiders": ins_meta,
             "slippage_bps": cfg["slippage_bps"], "capital": cfg["capital"],
             "risk": cfg["risk_per_trade"], "max_pct": cfg["max_position_pct"],
             "max_pos": cfg["max_positions"], "min_score": cfg["min_score"],
