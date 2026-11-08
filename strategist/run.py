@@ -226,6 +226,11 @@ def main():
         insiders, ins_meta = {}, {}
         if cfg["strategies"].get("insider_cluster", {}).get("enabled"):
             insiders, ins_meta = INS.load_insiders([t for t in universe if t in prices], cfg)
+            if not insiders:  # no SEC data -> don't report or count an untestable strategy
+                log.warning("No insider data; insider_cluster skipped this run")
+                cfg["strategies"]["insider_cluster"]["enabled"] = False
+                ins_meta = {"status": "SEC data unavailable, strategy skipped",
+                            "quarters_missing": len(ins_meta.get("missing", []))}
     bench = prices.get("IWM")
     if bench is None:
         raise SystemExit("IWM benchmark missing; it's needed for the calendar and regimes.")

@@ -52,6 +52,8 @@ def _download(name):
             continue
         if r.status_code == 200 and r.content[:2] == b"PK":
             return r.content
+        log.warning("SEC %s%s -> HTTP %s, %d bytes, starts %r", base, name, r.status_code,
+                    len(r.content), r.content[:80])
         time.sleep(0.5)
     return None
 
@@ -115,20 +117,20 @@ def load_insiders(tickers, cfg):
         name = f"{y}q{q}_form345.zip"
         cache = os.path.join(idir, f"{y}q{q}.csv")
         recent = k >= len(qs) - 2  # newest quarters may be posted/revised after first try
+        if os.path.exists(cache) and os.path.getsize(cache) <= 2:
+            os.remove(cache)  # an earlier failed download; try again
         if os.path.exists(cache) and not (recent and time.time() - os.path.getmtime(cache) > 7 * 86400):
-            if os.path.getsize(cache) > 2:
-                frames.append(pd.read_csv(cache, parse_dates=["filing_date"]))
-                got += 1
-            elif not recent:
-                missing.append(name)
-            if not recent or os.path.getsize(cache) > 2:
-                continue
+            frames.append(pd.read_csv(cache, parse_dates=["filing_date"]))
+            got += 1
+            continue
         content = _download(name)
         time.sleep(0.3)
         if content is None:
             missing.append(name)
-            if not recent:
-                pd.DataFrame().to_csv(cache, index=False)
+            if len(missing) >= 3 and got == 0:
+                log.warning("Insiders: first 3 quarters failed, SEC unreachable; skipping the rest")
+                missing += [f"{yy}q{qq}_form345.zip" for yy, qq in qs[k + 1:]]
+                break
             continue
         try:
             df = _parse(content)
