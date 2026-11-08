@@ -9,8 +9,49 @@
     "is_end": "2024-03-11",
     "oos_start": "2024-03-12",
     "universe_n": 985,
-    "n_trials": 16,
+    "n_trials": 20,
     "earnings_n": 985,
+    "insiders": {
+      "quarters": 0,
+      "missing": [
+        "2018q1_form345.zip",
+        "2018q2_form345.zip",
+        "2018q3_form345.zip",
+        "2018q4_form345.zip",
+        "2019q1_form345.zip",
+        "2019q2_form345.zip",
+        "2019q3_form345.zip",
+        "2019q4_form345.zip",
+        "2020q1_form345.zip",
+        "2020q2_form345.zip",
+        "2020q3_form345.zip",
+        "2020q4_form345.zip",
+        "2021q1_form345.zip",
+        "2021q2_form345.zip",
+        "2021q3_form345.zip",
+        "2021q4_form345.zip",
+        "2022q1_form345.zip",
+        "2022q2_form345.zip",
+        "2022q3_form345.zip",
+        "2022q4_form345.zip",
+        "2023q1_form345.zip",
+        "2023q2_form345.zip",
+        "2023q3_form345.zip",
+        "2023q4_form345.zip",
+        "2024q1_form345.zip",
+        "2024q2_form345.zip",
+        "2024q3_form345.zip",
+        "2024q4_form345.zip",
+        "2025q1_form345.zip",
+        "2025q2_form345.zip",
+        "2025q3_form345.zip",
+        "2025q4_form345.zip",
+        "2026q1_form345.zip",
+        "2026q2_form345.zip",
+        "2026q3_form345.zip",
+        "2026q4_form345.zip"
+      ]
+    },
     "slippage_bps": 15,
     "capital": 10000,
     "risk": 0.01,
@@ -20,6 +61,119 @@
     "min_trades": 30
   },
   "results": [
+    {
+      "name": "insider_cluster",
+      "params": {
+        "min_insiders": 2,
+        "window_days": 10,
+        "min_value": 100000,
+        "max_hold": 5,
+        "stop_atr": 2.0,
+        "exit_low": 10
+      },
+      "rules": "ENTRY: on a Form 4 filing date, >= 2 distinct Directors/Officers have filed open-market buys in the last 10 days totalling >= $100,000 (first crossing) -> buy-limit next open at <= signal close +1%. STOP: entry - 2.0 x ATR(14). EXIT: close below 10-day low (next open) or after 5 sessions.",
+      "thesis": "Several officers/directors buying their own stock on the open market within days signals undervaluation; thinly covered small caps price it in slowly.",
+      "other_side": "Sellers without the insiders' information; analysts slow to notice.",
+      "is": {
+        "start": "2018-12-31",
+        "end": "2024-03-11",
+        "total_return": 0.0,
+        "sharpe": 0.0,
+        "max_dd": 0.0,
+        "n": 0,
+        "win_rate": 0.0,
+        "avg_R": 0.0,
+        "expectancy_pct": 0.0,
+        "profit_factor": 0.0,
+        "avg_hold": 0.0
+      },
+      "oos": {
+        "start": "2024-03-12",
+        "end": "2026-11-06",
+        "total_return": 0.0,
+        "sharpe": 0.0,
+        "max_dd": 0.0,
+        "n": 0,
+        "win_rate": 0.0,
+        "avg_R": 0.0,
+        "expectancy_pct": 0.0,
+        "profit_factor": 0.0,
+        "avg_hold": 0.0
+      },
+      "stress": {
+        "start": "2024-03-12",
+        "end": "2026-11-06",
+        "total_return": 0.0,
+        "sharpe": 0.0,
+        "max_dd": 0.0,
+        "n": 0,
+        "win_rate": 0.0,
+        "avg_R": 0.0,
+        "expectancy_pct": 0.0,
+        "profit_factor": 0.0,
+        "avg_hold": 0.0
+      },
+      "deflated_sharpe": 0.0,
+      "n_trials": 20,
+      "monte_carlo": {
+        "p50": null,
+        "p95": null,
+        "worst": null
+      },
+      "walk_forward": {
+        "folds": 11,
+        "sharpe": 0.0,
+        "total_return": 0.0,
+        "pct_positive_folds": 0.0
+      },
+      "regimes_years": {
+        "2020": {
+          "start": "2020-01-01",
+          "end": "2020-12-31",
+          "total_return": 0.0,
+          "sharpe": 0.0,
+          "max_dd": 0.0,
+          "n": 0,
+          "win_rate": 0.0,
+          "avg_R": 0.0,
+          "expectancy_pct": 0.0,
+          "profit_factor": 0.0,
+          "avg_hold": 0.0
+        },
+        "2022": {
+          "start": "2022-01-01",
+          "end": "2022-12-31",
+          "total_return": 0.0,
+          "sharpe": 0.0,
+          "max_dd": 0.0,
+          "n": 0,
+          "win_rate": 0.0,
+          "avg_R": 0.0,
+          "expectancy_pct": 0.0,
+          "profit_factor": 0.0,
+          "avg_hold": 0.0
+        }
+      },
+      "regime_table": {},
+      "breaks_in": null,
+      "score": {
+        "oos_sharpe": 1,
+        "deflated_sharpe": 1,
+        "max_drawdown": 5,
+        "trade_count": 1,
+        "edge_after_costs": 1,
+        "total": 9
+      },
+      "passed": false,
+      "why_fail": [
+        "Survivorship bias: the universe is today's index members, so delisted losers are missing and results are flattered.",
+        "Float and market-cap filters aren't applied point in time in the backtest. The live Scout applies them from Robinhood fundamentals.",
+        "Edge disappears with double slippage + one bar late, so it's too fill-sensitive.",
+        "Fewer than 60% of walk-forward windows were profitable.",
+        "Only 0 out-of-sample trades, so the estimate is noisy.",
+        "Deflated Sharpe 0.00 < 0.95 after counting 20 variants tried, so it could be luck."
+      ]
+    },
     {
       "name": "volume_breakout",
       "params": {
@@ -71,8 +225,8 @@
         "profit_factor": 0.8838846600162146,
         "avg_hold": 7.520710059171598
       },
-      "deflated_sharpe": 0.17749359882741972,
-      "n_trials": 16,
+      "deflated_sharpe": 0.16918944039983685,
+      "n_trials": 20,
       "monte_carlo": {
         "p50": -0.2532321152064492,
         "p95": -0.4285763257780712,
@@ -147,7 +301,7 @@
         "2020: return -17.3%, max drawdown -29.6%.",
         "2022: return -30.0%, max drawdown -30.3%.",
         "Fewer than 60% of walk-forward windows were profitable.",
-        "Deflated Sharpe 0.18 < 0.95 after counting 16 variants tried, so it could be luck.",
+        "Deflated Sharpe 0.17 < 0.95 after counting 20 variants tried, so it could be luck.",
         "Weakest regime: downtrend/high-vol (avg R -0.34)."
       ]
     },
@@ -200,8 +354,8 @@
         "profit_factor": 0.5911644575742594,
         "avg_hold": 3.184049079754601
       },
-      "deflated_sharpe": 0.023147283952170798,
-      "n_trials": 16,
+      "deflated_sharpe": 0.021412780505519122,
+      "n_trials": 20,
       "monte_carlo": {
         "p50": -0.29103952188777515,
         "p95": -0.42957682598437535,
@@ -276,7 +430,7 @@
         "2020: return -7.5%, max drawdown -28.5%.",
         "2022: return -18.5%, max drawdown -22.1%.",
         "Fewer than 60% of walk-forward windows were profitable.",
-        "Deflated Sharpe 0.02 < 0.95 after counting 16 variants tried, so it could be luck.",
+        "Deflated Sharpe 0.02 < 0.95 after counting 20 variants tried, so it could be luck.",
         "Weakest regime: downtrend/high-vol (avg R -0.11)."
       ]
     },
@@ -331,8 +485,8 @@
         "profit_factor": 0.7273273175927268,
         "avg_hold": 7.817813765182186
       },
-      "deflated_sharpe": 0.017168055409567094,
-      "n_trials": 16,
+      "deflated_sharpe": 0.015844663846450974,
+      "n_trials": 20,
       "monte_carlo": {
         "p50": -0.3076834933265435,
         "p95": -0.4478274276604425,
@@ -406,7 +560,7 @@
         "Edge disappears with double slippage + one bar late, so it's too fill-sensitive.",
         "2020: return -21.8%, max drawdown -22.6%.",
         "Fewer than 60% of walk-forward windows were profitable.",
-        "Deflated Sharpe 0.02 < 0.95 after counting 16 variants tried, so it could be luck.",
+        "Deflated Sharpe 0.02 < 0.95 after counting 20 variants tried, so it could be luck.",
         "Weakest regime: downtrend/high-vol (avg R -0.17)."
       ]
     }
