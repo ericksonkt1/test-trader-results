@@ -178,26 +178,32 @@ def load_earnings(tickers, cfg):
     ecfg = cfg.get("earnings", {})
     max_age_h = 24 * ecfg.get("refresh_days", 7)
     cap = ecfg.get("max_refresh_per_run", 250)
-    workers = ecfg.get("workers", 4)
+    workers = ecfg.get("workers", 2)
 
-    def fetch(t):
+    def fetch(t, pause=0.3):
+        """True = data saved; False = Yahoo has none (empty file saved); None = error, retry."""
         p = os.path.join(edir, f"{t}.csv")
+        time.sleep(pause)
         try:
             ed = yf.Ticker(t).get_earnings_dates(limit=40)
-            if ed is not None and len(ed):
-                ed = ed.reset_index()
-                ed.columns = [str(c) for c in ed.columns]
-                ed.to_csv(p, index=False)
-                return True
         except Exception:  # noqa: BLE001
-            if os.path.exists(p):  # keep the last good file; retry next run
-                return False
-        pd.DataFrame().to_csv(p, index=False)
+            return None  # no file written -> counted as missing and retried
+        if ed is not None and len(ed):
+            ed = ed.reset_index()
+            ed.columns = [str(c) for c in ed.columns]
+            ed.to_csv(p, index=False)
+            return True
+        if not os.path.exists(p):
+            pd.DataFrame().to_csv(p, index=False)
         return False
 
-    # Missing files are always fetched. Stale ones are refreshed oldest-first, capped per run,
+    # Missing or empty files are always fetched. Stale ones are refreshed oldest-first, capped per run,
     # so the weekly refresh is spread over several nights instead of one 2-hour run.
-    missing = [t for t in tickers if not os.path.exists(os.path.join(edir, f"{t}.csv"))]
+    def _have(t):  # an empty file (no dates last time) is re-checked every run
+        p = os.path.join(edir, f"{t}.csv")
+        return os.path.exists(p) and os.path.getsize(p) > 2
+
+    missing = [t for t in tickers if not _have(t)]
     miss_set = set(missing)
     stale = sorted((t for t in tickers if t not in miss_set
                     and not _fresh(os.path.join(edir, f"{t}.csv"), max_age_h)),
@@ -205,14 +211,26 @@ def load_earnings(tickers, cfg):
     todo = missing + stale[:max(0, cap - len(missing))]
     log.info("Earnings dates: %d missing, %d stale, fetching %d", len(missing), len(stale), len(todo))
     t0 = time.time()
-    ok = 0
+    res = {}
     with ThreadPoolExecutor(max_workers=workers) as ex:
-        for n, res in enumerate(ex.map(fetch, todo), 1):
-            ok += bool(res)
+        for n, (t, r) in enumerate(zip(todo, ex.map(fetch, todo)), 1):
+            res[t] = r
             if n % 100 == 0:
                 log.info("Earnings dates: %d/%d fetched (%.0fs)", n, len(todo), time.time() - t0)
+    # Second pass: errors and empty answers (often throttling) retried one at a time, slower.
+    retry = [t for t, r in res.items() if not r]
+    if retry:
+        log.info("Earnings: retrying %d tickers slowly", len(retry))
+        time.sleep(30)
+        for t in retry:
+            r = fetch(t, pause=1.0)
+            if r is not None:
+                res[t] = r
     if todo:
-        log.info("Earnings fetch done: %d/%d with data in %.0fs", ok, len(todo), time.time() - t0)
+        vals = list(res.values())
+        log.info("Earnings fetch done in %.0fs: %d with data, %d none on Yahoo, %d errors "
+                 "(errors retried next run)", time.time() - t0, vals.count(True),
+                 vals.count(False), vals.count(None))
 
     out = {}
     for t in tickers:

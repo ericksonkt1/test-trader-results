@@ -134,7 +134,8 @@ def write_report(results, meta, out_dir):
         L += ["> **SYNTHETIC DATA. CODE TEST ONLY. These numbers mean nothing.**", ""]
     L += [f"# Strategist report — {meta['run_date']}", "",
           f"- Data: {meta['source']}, {meta['start']} → {meta['end']}, "
-          f"{meta['universe_n']} tickers with usable history",
+          f"{meta['universe_n']} tickers with usable history, earnings dates for "
+          f"{meta.get('earnings_n', 0)}",
           f"- In-sample: {meta['is_start']} → {meta['is_end']} · Out-of-sample: "
           f"{meta['oos_start']} → {meta['end']}",
           f"- Variants tested tonight (counted for deflated Sharpe): {meta['n_trials']}",
@@ -300,6 +301,7 @@ def main():
             "start": str(calendar[0].date()), "end": str(end.date()),
             "is_start": str(is_start.date()), "is_end": str(is_end.date()),
             "oos_start": str(oos_start.date()), "universe_n": len(usable), "n_trials": n_trials,
+            "earnings_n": sum(1 for t in usable if t in earnings),
             "slippage_bps": cfg["slippage_bps"], "capital": cfg["capital"],
             "risk": cfg["risk_per_trade"], "max_pct": cfg["max_position_pct"],
             "max_pos": cfg["max_positions"], "min_score": cfg["min_score"],
