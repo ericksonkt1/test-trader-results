@@ -116,6 +116,29 @@ def pullback_reversion(df, p, cfg, earn=None):
     return _frame(df, sig, stop, limit, exit_sig, -r, p["max_hold"])
 
 
+# --------------------------------------------------------------------------- 3b. pullback + market regime
+def market_uptrend(mkt, n=200):
+    """True when the small-cap ETF closes above its n-day SMA (known at that day's close)."""
+    c = mkt["close"]
+    return c > c.rolling(n).mean()
+
+
+def pullback_regime(df, p, cfg, mkt_up=None):
+    """
+    pullback_reversion with one added gate: only trade when the small-cap market (IJR) is
+    itself above its 200-day SMA. Spec: desk/specs/pullback_regime.md (pre-registered 2026-11-19).
+    The baseline lost most in downtrend/high-vol regimes; this tests whether skipping a falling
+    market fixes that. `mkt_up` is a bool Series from market_uptrend(), dated by session.
+    """
+    base = pullback_reversion(df, p, cfg)
+    if mkt_up is None:
+        gate = pd.Series(False, index=df.index)
+    else:  # same-session value only; a missing market bar means no trade (no forward fill)
+        gate = mkt_up.reindex(df.index).fillna(False).astype(bool)
+    base["signal"] &= gate.values
+    return base
+
+
 # --------------------------------------------------------------------------- 4. insider cluster buys
 def cluster_events(ins, index, window_days, min_insiders):
     """
@@ -166,6 +189,7 @@ STRATEGIES = {
     "earnings_drift": earnings_drift,
     "volume_breakout": volume_breakout,
     "pullback_reversion": pullback_reversion,
+    "pullback_regime": pullback_regime,
     "insider_cluster": insider_cluster,
 }
 
@@ -178,6 +202,10 @@ THESIS = {
     "pullback_reversion": ("Sharp 2-day selloffs in healthy uptrends are forced/emotional "
                            "selling that reverts within days.",
                            "Panic sellers and stop-loss cascades."),
+    "pullback_regime": ("Same 2-day selloff reversion in uptrending stocks, but only while the "
+                        "small-cap market (IJR) is above its 200-day SMA; dips in a falling market "
+                        "keep falling.",
+                        "Panic sellers and stop-loss cascades in an otherwise healthy market."),
     "insider_cluster": ("Several officers/directors buying their own stock on the open market "
                         "within days signals undervaluation; thinly covered small caps price it in slowly.",
                         "Sellers without the insiders' information; analysts slow to notice."),
@@ -204,6 +232,7 @@ def describe_rules(name, p):
                 f"+{p.get('limit_buffer', 0.01):.0%}. STOP: entry - {p['stop_atr']} x ATR(14). "
                 f"EXIT: close below {p.get('exit_low', 10)}-day low (next open) or after "
                 f"{p['max_hold']} sessions.")
-    return (f"ENTRY: close > 200SMA and RSI(2) < {p['rsi_max']} -> buy-limit next open at <= "
+    gate = ("IJR close > IJR 200SMA and " if name == "pullback_regime" else "")
+    return (f"ENTRY: {gate}close > 200SMA and RSI(2) < {p['rsi_max']} -> buy-limit next open at <= "
             f"signal close. STOP: entry - {p['stop_atr']} x ATR(14). EXIT: close > 5SMA "
             f"(next open) or after {p['max_hold']} sessions.")

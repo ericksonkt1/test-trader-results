@@ -123,7 +123,7 @@ def _fresh(path, max_age_hours):
         (time.time() - os.path.getmtime(path)) < max_age_hours * 3600
 
 
-def load_prices(tickers, cfg, extra=("IWM", "SPY")):
+def load_prices(tickers, cfg, extra=("IWM", "SPY", "IJR")):
     """Returns {ticker: DataFrame[open, high, low, close, volume]} indexed by date."""
     import yfinance as yf
 

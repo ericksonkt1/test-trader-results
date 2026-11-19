@@ -95,6 +95,22 @@
         ]
       }
     },
+    "pullback_regime": {
+      "enabled": true,
+      "spec": "desk/specs/pullback_regime.md (pre-registered 2026-11-19)",
+      "grid": {
+        "rsi_max": [
+          5
+        ],
+        "max_hold": [
+          5,
+          10
+        ],
+        "stop_atr": [
+          2.5
+        ]
+      }
+    },
     "insider_cluster": {
       "enabled": true,
       "source": "SEC Insider Transactions Data Sets (quarterly)",

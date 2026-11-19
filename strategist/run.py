@@ -30,7 +30,7 @@ from . import data as D
 from . import insiders as INS
 from . import stats as S
 from .engine import simulate
-from .strategies import STRATEGIES, THESIS, describe_rules
+from .strategies import STRATEGIES, THESIS, describe_rules, market_uptrend
 
 log = logging.getLogger("strategist")
 
@@ -40,7 +40,7 @@ def expand_grid(grid):
     return [dict(zip(keys, vals)) for vals in itertools.product(*(grid[k] for k in keys))]
 
 
-def build_signals(name, params, prices, earnings, cfg, universe, insiders=None):
+def build_signals(name, params, prices, earnings, cfg, universe, insiders=None, mkt_up=None):
     fn, out = STRATEGIES[name], {}
     side = insiders if name == "insider_cluster" else earnings
     bdays = cfg.get("earnings_blackout_days", 3)
@@ -48,7 +48,10 @@ def build_signals(name, params, prices, earnings, cfg, universe, insiders=None):
         df = prices.get(t)
         if df is None or len(df) < 260:
             continue
-        s = fn(df, params, cfg, (side or {}).get(t))
+        if name == "pullback_regime":
+            s = fn(df, params, cfg, mkt_up)
+        else:
+            s = fn(df, params, cfg, (side or {}).get(t))
         if name != "earnings_drift" and t in earnings:
             # Desk Rule: never launch a position into that stock's earnings
             s["signal"] &= ~D.upcoming_earnings_mask(earnings[t], df.index, bdays).values
@@ -189,6 +192,10 @@ def write_report(results, meta, out_dir):
                 L.append(f"**{yr}:** return {fmt_pct(y['total_return'])}, max DD "
                          f"{y['max_dd']:.1%}, {y['n']} trades "
                          f"({'out-of-sample' if y['start'] >= meta['oos_start'] else 'in-sample'}).")
+        if r.get("gate"):
+            g = r["gate"]
+            L.append(f"**Market gate ({g['market']} > 200SMA) open:** {g['open_pct_is']:.0%} of "
+                     f"in-sample days, {g['open_pct_oos']:.0%} of out-of-sample days.")
         L.append(f"**Market condition that breaks it:** {r['breaks_in'] or 'not enough trades to tell'}")
         sc = r["score"]
         L += ["", f"Score: OOS Sharpe {sc['oos_sharpe']} · Deflated Sharpe {sc['deflated_sharpe']} · "
@@ -235,6 +242,8 @@ def main():
     if bench is None:
         raise SystemExit("IWM benchmark missing; it's needed for the calendar and regimes.")
     calendar = bench.index[bench.index >= pd.Timestamp(cfg["start"])]
+    mkt_name = "IJR" if "IJR" in prices else "IWM"   # synthetic data has no IJR
+    mkt_up = market_uptrend(prices[mkt_name])
     usable = [t for t in universe if t in prices and len(prices[t]) >= 260]
 
     warmup = 250
@@ -250,7 +259,7 @@ def main():
         for k, p in enumerate(expand_grid(scfg["grid"])):
             log.info("Simulating %s variant %d: %s", name, k, p)
             t0 = time.time()
-            sig = build_signals(name, p, prices, earnings, cfg, usable, insiders)
+            sig = build_signals(name, p, prices, earnings, cfg, usable, insiders, mkt_up)
             eq, tr = simulate(prices, sig, cfg, calendar)
             log.info("  %d trades, %.1fs", len(tr), time.time() - t0)
             ret = S.daily_returns(eq)
@@ -271,7 +280,7 @@ def main():
         oos_stats = S.period_stats(b["equity"], b["trades"], oos_start, end)
 
         log.info("Stress test %s (2x slippage, 1 bar late)", name)
-        sig = build_signals(name, b["params"], prices, earnings, cfg, usable, insiders)
+        sig = build_signals(name, b["params"], prices, earnings, cfg, usable, insiders, mkt_up)
         eq_s, tr_s = simulate(prices, sig, cfg, calendar, slip_mult=2.0, delay=1)
         stress = S.period_stats(eq_s, tr_s, oos_start, end)
 
@@ -298,6 +307,11 @@ def main():
              "n_trials": n_trials, "monte_carlo": mc, "walk_forward": wf,
              "regimes_years": years, "regime_table": table, "breaks_in": worst,
              "score": score, "passed": bool(passed)}
+        if name == "pullback_regime":
+            g = mkt_up.reindex(calendar).fillna(False)
+            r["gate"] = {"market": mkt_name,
+                         "open_pct_is": float(g[is_start:is_end].mean()),
+                         "open_pct_oos": float(g[oos_start:end].mean())}
         r["why_fail"] = why_it_could_fail(r, cfg)
         results.append(r)
         r["_oos_trades"] = oos_tr
