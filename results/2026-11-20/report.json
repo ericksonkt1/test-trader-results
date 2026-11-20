@@ -1,0 +1,688 @@
+{
+  "meta": {
+    "run_date": "2026-11-20",
+    "synthetic": false,
+    "source": "Yahoo Finance via yfinance (adjusted daily bars)",
+    "start": "2018-01-02",
+    "end": "2026-11-19",
+    "is_start": "2018-12-31",
+    "is_end": "2024-03-19",
+    "oos_start": "2024-03-20",
+    "universe_n": 985,
+    "n_trials": 22,
+    "earnings_n": 985,
+    "insiders": {
+      "quarters": 35,
+      "missing": [
+        "2026q4_form345.zip"
+      ],
+      "tickers": 820,
+      "last_filing": "2026-09-30"
+    },
+    "slippage_bps": 15,
+    "capital": 10000,
+    "risk": 0.01,
+    "max_pct": 0.25,
+    "max_pos": 6,
+    "min_score": 18,
+    "min_trades": 30
+  },
+  "results": [
+    {
+      "name": "insider_cluster",
+      "params": {
+        "min_insiders": 2,
+        "window_days": 10,
+        "min_value": 100000,
+        "max_hold": 10,
+        "stop_atr": 2.0,
+        "exit_low": 10
+      },
+      "rules": "ENTRY: on a Form 4 filing date, >= 2 distinct Directors/Officers have filed open-market buys in the last 10 days totalling >= $100,000 (first crossing) -> buy-limit next open at <= signal close +1%. STOP: entry - 2.0 x ATR(14). EXIT: close below 10-day low (next open) or after 10 sessions.",
+      "thesis": "Several officers/directors buying their own stock on the open market within days signals undervaluation; thinly covered small caps price it in slowly.",
+      "other_side": "Sellers without the insiders' information; analysts slow to notice.",
+      "is": {
+        "start": "2018-12-31",
+        "end": "2024-03-19",
+        "total_return": -0.08248906817870749,
+        "sharpe": -0.15286175660442655,
+        "max_dd": -0.16260495559632526,
+        "n": 258,
+        "win_rate": 0.42248062015503873,
+        "avg_R": -0.025344301031494973,
+        "expectancy_pct": -0.00025580033567783924,
+        "profit_factor": 0.887029569583126,
+        "avg_hold": 5.953488372093023
+      },
+      "oos": {
+        "start": "2024-03-20",
+        "end": "2026-11-19",
+        "total_return": 0.06967669624109196,
+        "sharpe": 0.4113726166534561,
+        "max_dd": -0.07029364178292652,
+        "n": 135,
+        "win_rate": 0.45185185185185184,
+        "avg_R": 0.05242627339796157,
+        "expectancy_pct": 0.0004877035537160721,
+        "profit_factor": 1.2014235325484501,
+        "avg_hold": 6.9037037037037035
+      },
+      "stress": {
+        "start": "2024-03-20",
+        "end": "2026-11-19",
+        "total_return": 0.003050628309779979,
+        "sharpe": 0.04973487351397362,
+        "max_dd": -0.12606924578021705,
+        "n": 137,
+        "win_rate": 0.3357664233576642,
+        "avg_R": 0.01506077096206416,
+        "expectancy_pct": 0.00013466219322382913,
+        "profit_factor": 1.0461800361867093,
+        "avg_hold": 6.153284671532846
+      },
+      "deflated_sharpe": 0.5329394683722035,
+      "n_trials": 22,
+      "monte_carlo": {
+        "p50": -0.058134651459919084,
+        "p95": -0.11190957915606847,
+        "worst": -0.15997328693226942
+      },
+      "walk_forward": {
+        "folds": 11,
+        "sharpe": -0.0278502475062126,
+        "total_return": -0.016363738881161938,
+        "pct_positive_folds": 0.36363636363636365
+      },
+      "regimes_years": {
+        "2020": {
+          "start": "2020-01-01",
+          "end": "2020-12-31",
+          "total_return": -0.06631336138868704,
+          "sharpe": -0.4279802752511694,
+          "max_dd": -0.1552219111656431,
+          "n": 68,
+          "win_rate": 0.4411764705882353,
+          "avg_R": -0.0847507360971163,
+          "expectancy_pct": -0.0008335701728691245,
+          "profit_factor": 0.7214532135975859,
+          "avg_hold": 3.9705882352941178
+        },
+        "2022": {
+          "start": "2022-01-01",
+          "end": "2022-12-31",
+          "total_return": -0.011781208141080857,
+          "sharpe": -0.14121048146389292,
+          "max_dd": -0.05642431482012045,
+          "n": 49,
+          "win_rate": 0.3673469387755102,
+          "avg_R": -0.019841776313123206,
+          "expectancy_pct": -0.00020003660787246532,
+          "profit_factor": 0.9170984992721269,
+          "avg_hold": 6.918367346938775
+        }
+      },
+      "regime_table": {
+        "downtrend/high-vol": {
+          "avg_R": -0.03701640021975458,
+          "trades": 26
+        },
+        "downtrend/low-vol": {
+          "avg_R": -0.5256640155688613,
+          "trades": 5
+        },
+        "uptrend/high-vol": {
+          "avg_R": 0.04003249849228812,
+          "trades": 52
+        },
+        "uptrend/low-vol": {
+          "avg_R": 0.16512698982084145,
+          "trades": 52
+        }
+      },
+      "breaks_in": "downtrend/low-vol",
+      "score": {
+        "oos_sharpe": 2,
+        "deflated_sharpe": 2,
+        "max_drawdown": 5,
+        "trade_count": 4,
+        "edge_after_costs": 2,
+        "total": 15
+      },
+      "passed": false,
+      "why_fail": [
+        "Survivorship bias: the universe is today's index members, so delisted losers are missing and results are flattered.",
+        "Float and market-cap filters aren't applied point in time in the backtest. The live Scout applies them from Robinhood fundamentals.",
+        "Edge more than halves with worse fills/timing.",
+        "2020: return -6.6%, max drawdown -15.5%.",
+        "2022: return -1.2%, max drawdown -5.6%.",
+        "Fewer than 60% of walk-forward windows were profitable.",
+        "Deflated Sharpe 0.53 < 0.95 after counting 22 variants tried, so it could be luck.",
+        "Weakest regime: downtrend/low-vol (avg R -0.53)."
+      ]
+    },
+    {
+      "name": "volume_breakout",
+      "params": {
+        "lookback": 50,
+        "vol_mult": 1.5,
+        "max_hold": 10,
+        "stop_atr": 2.0,
+        "exit_low": 10
+      },
+      "rules": "ENTRY: close > prior 50-day high, volume >= 1.5x 50-day avg, close > 200SMA, 50SMA > 200SMA -> buy-limit next open at <= signal close +1%. STOP: entry - 2.0 x ATR(14). EXIT: close below 10-day low (next open) or after 10 sessions.",
+      "thesis": "New highs on 1.5x+ volume in an uptrend signal fresh demand.",
+      "other_side": "Holders selling at 'resistance' and short-term faders.",
+      "is": {
+        "start": "2018-12-31",
+        "end": "2024-03-19",
+        "total_return": -0.2039266552490442,
+        "sharpe": -0.06774810974600601,
+        "max_dd": -0.5004487627097389,
+        "n": 930,
+        "win_rate": 0.45806451612903226,
+        "avg_R": -0.002181362307530558,
+        "expectancy_pct": -4.582015960189359e-05,
+        "profit_factor": 0.9534623391224276,
+        "avg_hold": 7.7172043010752684
+      },
+      "oos": {
+        "start": "2024-03-20",
+        "end": "2026-11-19",
+        "total_return": -0.043080830868373776,
+        "sharpe": 0.001473800673209866,
+        "max_dd": -0.30013727549380875,
+        "n": 503,
+        "win_rate": 0.44930417495029823,
+        "avg_R": -0.006177983630788864,
+        "expectancy_pct": -5.183303908068095e-05,
+        "profit_factor": 0.9601729636618862,
+        "avg_hold": 7.638170974155069
+      },
+      "stress": {
+        "start": "2024-03-20",
+        "end": "2026-11-19",
+        "total_return": -0.27029807209482926,
+        "sharpe": -0.5454557745563987,
+        "max_dd": -0.3284754975993419,
+        "n": 506,
+        "win_rate": 0.3952569169960474,
+        "avg_R": -0.06985413078085748,
+        "expectancy_pct": -0.0005345148720770197,
+        "profit_factor": 0.8471597540832071,
+        "avg_hold": 7.575098814229249
+      },
+      "deflated_sharpe": 0.28997875317020944,
+      "n_trials": 22,
+      "monte_carlo": {
+        "p50": -0.22746040676057244,
+        "p95": -0.4093481770809128,
+        "worst": -0.5275416700304314
+      },
+      "walk_forward": {
+        "folds": 11,
+        "sharpe": -0.42925454170305877,
+        "total_return": -0.5213280045157919,
+        "pct_positive_folds": 0.36363636363636365
+      },
+      "regimes_years": {
+        "2020": {
+          "start": "2020-01-01",
+          "end": "2020-12-31",
+          "total_return": -0.1806913624855052,
+          "sharpe": -0.9745442769682318,
+          "max_dd": -0.2990630599972499,
+          "n": 179,
+          "win_rate": 0.4301675977653631,
+          "avg_R": -0.0744914107757903,
+          "expectancy_pct": -0.0007623699094752988,
+          "profit_factor": 0.7788267867256857,
+          "avg_hold": 7.106145251396648
+        },
+        "2022": {
+          "start": "2022-01-01",
+          "end": "2022-12-31",
+          "total_return": -0.29901110718100465,
+          "sharpe": -1.9495871375846323,
+          "max_dd": -0.30217440661857475,
+          "n": 167,
+          "win_rate": 0.38323353293413176,
+          "avg_R": -0.21416282962291527,
+          "expectancy_pct": -0.0019994211576639383,
+          "profit_factor": 0.5614410921180699,
+          "avg_hold": 7.281437125748503
+        }
+      },
+      "regime_table": {
+        "downtrend/high-vol": {
+          "avg_R": -0.30868104251890455,
+          "trades": 60
+        },
+        "downtrend/low-vol": {
+          "avg_R": 0.21540162844365981,
+          "trades": 16
+        },
+        "uptrend/high-vol": {
+          "avg_R": 0.04143825145585165,
+          "trades": 174
+        },
+        "uptrend/low-vol": {
+          "avg_R": 0.018801007811979166,
+          "trades": 253
+        }
+      },
+      "breaks_in": "downtrend/high-vol",
+      "score": {
+        "oos_sharpe": 2,
+        "deflated_sharpe": 1,
+        "max_drawdown": 1,
+        "trade_count": 5,
+        "edge_after_costs": 1,
+        "total": 10
+      },
+      "passed": false,
+      "why_fail": [
+        "Survivorship bias: the universe is today's index members, so delisted losers are missing and results are flattered.",
+        "Float and market-cap filters aren't applied point in time in the backtest. The live Scout applies them from Robinhood fundamentals.",
+        "Edge disappears with double slippage + one bar late, so it's too fill-sensitive.",
+        "2020: return -18.1%, max drawdown -29.9%.",
+        "2022: return -29.9%, max drawdown -30.2%.",
+        "Fewer than 60% of walk-forward windows were profitable.",
+        "Deflated Sharpe 0.29 < 0.95 after counting 22 variants tried, so it could be luck.",
+        "Weakest regime: downtrend/high-vol (avg R -0.31)."
+      ]
+    },
+    {
+      "name": "pullback_regime",
+      "params": {
+        "rsi_max": 5,
+        "max_hold": 10,
+        "stop_atr": 2.5
+      },
+      "rules": "ENTRY: IJR close > IJR 200SMA and close > 200SMA and RSI(2) < 5 -> buy-limit next open at <= signal close. STOP: entry - 2.5 x ATR(14). EXIT: close > 5SMA (next open) or after 10 sessions.",
+      "thesis": "Same 2-day selloff reversion in uptrending stocks, but only while the small-cap market (IJR) is above its 200-day SMA; dips in a falling market keep falling.",
+      "other_side": "Panic sellers and stop-loss cascades in an otherwise healthy market.",
+      "is": {
+        "start": "2018-12-31",
+        "end": "2024-03-19",
+        "total_return": -0.26484042238812344,
+        "sharpe": -0.529000235277391,
+        "max_dd": -0.31190736685763754,
+        "n": 894,
+        "win_rate": 0.5894854586129754,
+        "avg_R": -0.031305673439486335,
+        "expectancy_pct": -0.0003027763991632729,
+        "profit_factor": 0.819490662355978,
+        "avg_hold": 3.7941834451901566
+      },
+      "oos": {
+        "start": "2024-03-20",
+        "end": "2026-11-19",
+        "total_return": -0.07142545694327418,
+        "sharpe": -0.16724885590571192,
+        "max_dd": -0.23482317208658632,
+        "n": 761,
+        "win_rate": 0.5926412614980289,
+        "avg_R": -0.005866189508009755,
+        "expectancy_pct": -7.363680400531486e-05,
+        "profit_factor": 0.9500810310237932,
+        "avg_hold": 3.838370565045992
+      },
+      "stress": {
+        "start": "2024-03-20",
+        "end": "2026-11-19",
+        "total_return": -0.47066063249903467,
+        "sharpe": -1.6538054706615983,
+        "max_dd": -0.4858569499440366,
+        "n": 783,
+        "win_rate": 0.5287356321839081,
+        "avg_R": -0.08384568758852193,
+        "expectancy_pct": -0.0007780816033202865,
+        "profit_factor": 0.625331289238031,
+        "avg_hold": 3.6475095785440614
+      },
+      "deflated_sharpe": 0.20178587562329608,
+      "n_trials": 22,
+      "monte_carlo": {
+        "p50": -0.1656320488321778,
+        "p95": -0.29124415042484103,
+        "worst": -0.4420330306025916
+      },
+      "walk_forward": {
+        "folds": 11,
+        "sharpe": -0.3216741177307017,
+        "total_return": -0.20141533098661435,
+        "pct_positive_folds": 0.36363636363636365
+      },
+      "regimes_years": {
+        "2020": {
+          "start": "2020-01-01",
+          "end": "2020-12-31",
+          "total_return": -0.07816111414433191,
+          "sharpe": -0.6987912495803137,
+          "max_dd": -0.20514234884899518,
+          "n": 170,
+          "win_rate": 0.6,
+          "avg_R": -0.023629789565461117,
+          "expectancy_pct": -0.0002101051301743444,
+          "profit_factor": 0.8645436299028048,
+          "avg_hold": 3.6882352941176473
+        },
+        "2022": {
+          "start": "2022-01-01",
+          "end": "2022-12-31",
+          "total_return": -0.12161737653862492,
+          "sharpe": -2.2931721104390785,
+          "max_dd": -0.12768256948134815,
+          "n": 48,
+          "win_rate": 0.3958333333333333,
+          "avg_R": -0.282910904335086,
+          "expectancy_pct": -0.0026440568675930934,
+          "profit_factor": 0.31763976365490365,
+          "avg_hold": 3.8125
+        }
+      },
+      "regime_table": {
+        "downtrend/high-vol": {
+          "avg_R": 0.007733394277245631,
+          "trades": 10
+        },
+        "downtrend/low-vol": {
+          "avg_R": 0.014996991432666059,
+          "trades": 13
+        },
+        "uptrend/high-vol": {
+          "avg_R": 0.04589005032110169,
+          "trades": 285
+        },
+        "uptrend/low-vol": {
+          "avg_R": -0.03932699644261924,
+          "trades": 453
+        }
+      },
+      "breaks_in": "uptrend/low-vol",
+      "score": {
+        "oos_sharpe": 1,
+        "deflated_sharpe": 1,
+        "max_drawdown": 2,
+        "trade_count": 5,
+        "edge_after_costs": 1,
+        "total": 10
+      },
+      "passed": false,
+      "gate": {
+        "market": "IJR",
+        "open_pct_is": 0.5468392993145469,
+        "open_pct_oos": 0.8450074515648286
+      },
+      "why_fail": [
+        "Survivorship bias: the universe is today's index members, so delisted losers are missing and results are flattered.",
+        "Float and market-cap filters aren't applied point in time in the backtest. The live Scout applies them from Robinhood fundamentals.",
+        "Edge disappears with double slippage + one bar late, so it's too fill-sensitive.",
+        "2020: return -7.8%, max drawdown -20.5%.",
+        "2022: return -12.2%, max drawdown -12.8%.",
+        "Fewer than 60% of walk-forward windows were profitable.",
+        "Deflated Sharpe 0.20 < 0.95 after counting 22 variants tried, so it could be luck.",
+        "Weakest regime: uptrend/low-vol (avg R -0.04)."
+      ]
+    },
+    {
+      "name": "pullback_reversion",
+      "params": {
+        "rsi_max": 5,
+        "max_hold": 10,
+        "stop_atr": 2.5
+      },
+      "rules": "ENTRY: close > 200SMA and RSI(2) < 5 -> buy-limit next open at <= signal close. STOP: entry - 2.5 x ATR(14). EXIT: close > 5SMA (next open) or after 10 sessions.",
+      "thesis": "Sharp 2-day selloffs in healthy uptrends are forced/emotional selling that reverts within days.",
+      "other_side": "Panic sellers and stop-loss cascades.",
+      "is": {
+        "start": "2018-12-31",
+        "end": "2024-03-19",
+        "total_return": -0.2865164761368697,
+        "sharpe": -0.4182503058648035,
+        "max_dd": -0.36139147704757124,
+        "n": 1383,
+        "win_rate": 0.5943600867678959,
+        "avg_R": -0.02028288254922658,
+        "expectancy_pct": -0.00020361720494788726,
+        "profit_factor": 0.8732322984217217,
+        "avg_hold": 3.7346348517715113
+      },
+      "oos": {
+        "start": "2024-03-20",
+        "end": "2026-11-19",
+        "total_return": -0.10358079944237186,
+        "sharpe": -0.24081533543509878,
+        "max_dd": -0.2932055718755693,
+        "n": 863,
+        "win_rate": 0.5851680185399768,
+        "avg_R": -0.011998128914871503,
+        "expectancy_pct": -0.00010075379397346947,
+        "profit_factor": 0.9332786974141724,
+        "avg_hold": 3.808806488991889
+      },
+      "stress": {
+        "start": "2024-03-20",
+        "end": "2026-11-19",
+        "total_return": -0.5338979560703818,
+        "sharpe": -1.8938470956260718,
+        "max_dd": -0.5448282030235373,
+        "n": 888,
+        "win_rate": 0.5213963963963963,
+        "avg_R": -0.0916313693896201,
+        "expectancy_pct": -0.0008278734288474388,
+        "profit_factor": 0.5922017885946103,
+        "avg_hold": 3.581081081081081
+      },
+      "deflated_sharpe": 0.16846641384950745,
+      "n_trials": 22,
+      "monte_carlo": {
+        "p50": -0.187731934924669,
+        "p95": -0.3286516766275933,
+        "worst": -0.4550655473311028
+      },
+      "walk_forward": {
+        "folds": 11,
+        "sharpe": -0.2878478176424737,
+        "total_return": -0.2345262032523766,
+        "pct_positive_folds": 0.5454545454545454
+      },
+      "regimes_years": {
+        "2020": {
+          "start": "2020-01-01",
+          "end": "2020-12-31",
+          "total_return": -0.10545056461241198,
+          "sharpe": -0.6317988431273966,
+          "max_dd": -0.2925034180659366,
+          "n": 245,
+          "win_rate": 0.6204081632653061,
+          "avg_R": -0.023457474684461386,
+          "expectancy_pct": -0.00023806529161334787,
+          "profit_factor": 0.8489305022341928,
+          "avg_hold": 3.4122448979591837
+        },
+        "2022": {
+          "start": "2022-01-01",
+          "end": "2022-12-31",
+          "total_return": -0.1702009696660165,
+          "sharpe": -1.3872367405889512,
+          "max_dd": -0.20768349685946275,
+          "n": 230,
+          "win_rate": 0.5260869565217391,
+          "avg_R": -0.08314166853952229,
+          "expectancy_pct": -0.0007986527101823613,
+          "profit_factor": 0.6497264778944474,
+          "avg_hold": 3.717391304347826
+        }
+      },
+      "regime_table": {
+        "downtrend/high-vol": {
+          "avg_R": -0.08273736650852033,
+          "trades": 74
+        },
+        "downtrend/low-vol": {
+          "avg_R": 0.007981919790747777,
+          "trades": 40
+        },
+        "uptrend/high-vol": {
+          "avg_R": 0.0451465179328287,
+          "trades": 284
+        },
+        "uptrend/low-vol": {
+          "avg_R": -0.03736066240098251,
+          "trades": 465
+        }
+      },
+      "breaks_in": "downtrend/high-vol",
+      "score": {
+        "oos_sharpe": 1,
+        "deflated_sharpe": 1,
+        "max_drawdown": 2,
+        "trade_count": 5,
+        "edge_after_costs": 1,
+        "total": 10
+      },
+      "passed": false,
+      "why_fail": [
+        "Survivorship bias: the universe is today's index members, so delisted losers are missing and results are flattered.",
+        "Float and market-cap filters aren't applied point in time in the backtest. The live Scout applies them from Robinhood fundamentals.",
+        "Edge disappears with double slippage + one bar late, so it's too fill-sensitive.",
+        "2020: return -10.5%, max drawdown -29.3%.",
+        "2022: return -17.0%, max drawdown -20.8%.",
+        "Fewer than 60% of walk-forward windows were profitable.",
+        "Deflated Sharpe 0.17 < 0.95 after counting 22 variants tried, so it could be luck.",
+        "Weakest regime: downtrend/high-vol (avg R -0.08)."
+      ]
+    },
+    {
+      "name": "earnings_drift",
+      "params": {
+        "gap_min": 0.03,
+        "vol_mult": 2.0,
+        "max_hold": 10,
+        "stop_atr": 2.0,
+        "exit_low": 10
+      },
+      "rules": "ENTRY: on the earnings reaction day, gap up >= 3%, close > open, volume >= 2.0x 50-day avg -> buy-limit next open at <= signal close +1%. STOP: entry - 2.0 x ATR(14). EXIT: close below 10-day low (next open) or after 10 sessions.",
+      "thesis": "Strong post-earnings gaps that hold on heavy volume keep drifting as the market under-reacts.",
+      "other_side": "Slow-to-update holders and analysts; sellers taking quick profits.",
+      "is": {
+        "start": "2018-12-31",
+        "end": "2024-03-19",
+        "total_return": -0.19635179814989157,
+        "sharpe": -0.30607767109107964,
+        "max_dd": -0.2991922967100731,
+        "n": 423,
+        "win_rate": 0.46099290780141844,
+        "avg_R": -0.047990743435068046,
+        "expectancy_pct": -0.00044874170375850807,
+        "profit_factor": 0.8581576352244399,
+        "avg_hold": 8.026004728132389
+      },
+      "oos": {
+        "start": "2024-03-20",
+        "end": "2026-11-19",
+        "total_return": -0.25747538142997306,
+        "sharpe": -0.8710897684818759,
+        "max_dd": -0.3379696802766443,
+        "n": 280,
+        "win_rate": 0.4142857142857143,
+        "avg_R": -0.11086907039996553,
+        "expectancy_pct": -0.0010075867501077552,
+        "profit_factor": 0.7631851600489168,
+        "avg_hold": 7.703571428571428
+      },
+      "stress": {
+        "start": "2024-03-20",
+        "end": "2026-11-19",
+        "total_return": -0.25527290586906226,
+        "sharpe": -0.7997646734825602,
+        "max_dd": -0.35206667436620753,
+        "n": 250,
+        "win_rate": 0.42,
+        "avg_R": -0.11425152169624818,
+        "expectancy_pct": -0.0011012270579734934,
+        "profit_factor": 0.7226199210768007,
+        "avg_hold": 7.852
+      },
+      "deflated_sharpe": 0.020614714305579176,
+      "n_trials": 22,
+      "monte_carlo": {
+        "p50": -0.29018569303847463,
+        "p95": -0.4277910792303198,
+        "worst": -0.5458798181250306
+      },
+      "walk_forward": {
+        "folds": 11,
+        "sharpe": -0.39627222472028406,
+        "total_return": -0.2233166715705439,
+        "pct_positive_folds": 0.45454545454545453
+      },
+      "regimes_years": {
+        "2020": {
+          "start": "2020-01-01",
+          "end": "2020-12-31",
+          "total_return": -0.20705953128172383,
+          "sharpe": -2.182361016416864,
+          "max_dd": -0.22241671715621947,
+          "n": 77,
+          "win_rate": 0.36363636363636365,
+          "avg_R": -0.2833321769864958,
+          "expectancy_pct": -0.0028157520085478607,
+          "profit_factor": 0.4305676931861046,
+          "avg_hold": 6.987012987012987
+        },
+        "2022": {
+          "start": "2022-01-01",
+          "end": "2022-12-31",
+          "total_return": 0.05218331261820497,
+          "sharpe": 0.433794817685987,
+          "max_dd": -0.09674506587303877,
+          "n": 80,
+          "win_rate": 0.525,
+          "avg_R": 0.07684720551266087,
+          "expectancy_pct": 0.0007474760606942707,
+          "profit_factor": 1.1825241833688072,
+          "avg_hold": 8.45
+        }
+      },
+      "regime_table": {
+        "downtrend/high-vol": {
+          "avg_R": -0.14813645282213775,
+          "trades": 39
+        },
+        "downtrend/low-vol": {
+          "avg_R": 0.13271233621042705,
+          "trades": 11
+        },
+        "uptrend/high-vol": {
+          "avg_R": -0.1242004743478044,
+          "trades": 104
+        },
+        "uptrend/low-vol": {
+          "avg_R": -0.10959527315928586,
+          "trades": 126
+        }
+      },
+      "breaks_in": "downtrend/high-vol",
+      "score": {
+        "oos_sharpe": 1,
+        "deflated_sharpe": 1,
+        "max_drawdown": 1,
+        "trade_count": 5,
+        "edge_after_costs": 1,
+        "total": 9
+      },
+      "passed": false,
+      "why_fail": [
+        "Survivorship bias: the universe is today's index members, so delisted losers are missing and results are flattered.",
+        "Float and market-cap filters aren't applied point in time in the backtest. The live Scout applies them from Robinhood fundamentals.",
+        "Edge disappears with double slippage + one bar late, so it's too fill-sensitive.",
+        "2020: return -20.7%, max drawdown -22.2%.",
+        "Fewer than 60% of walk-forward windows were profitable.",
+        "Deflated Sharpe 0.02 < 0.95 after counting 22 variants tried, so it could be luck.",
+        "Weakest regime: downtrend/high-vol (avg R -0.15)."
+      ]
+    }
+  ]
+}
