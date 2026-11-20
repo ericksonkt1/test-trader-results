@@ -232,7 +232,11 @@ def main():
         source = "Yahoo Finance via yfinance (adjusted daily bars)"
         insiders, ins_meta = {}, {}
         if cfg["strategies"].get("insider_cluster", {}).get("enabled"):
-            insiders, ins_meta = INS.load_insiders([t for t in universe if t in prices], cfg)
+            try:
+                insiders, ins_meta = INS.load_insiders([t for t in universe if t in prices], cfg)
+            except Exception as e:  # noqa: BLE001  one data source must not kill the nightly run
+                log.exception("Insider data failed: %s", e)
+                insiders, ins_meta = {}, {}
             if not insiders:  # no SEC data -> don't report or count an untestable strategy
                 log.warning("No insider data; insider_cluster skipped this run")
                 cfg["strategies"]["insider_cluster"]["enabled"] = False

@@ -92,6 +92,14 @@ def _parse(content):
                          "value": df["value"]}).dropna(subset=["filing_date", "cik"])
 
 
+def _read_cache(path):
+    # Read back with the same types _parse produced: CSV turns "" into NaN and CIK strings into
+    # ints, so a filing with a blank ticker came back as a float and broke the symbol fallback.
+    df = pd.read_csv(path, parse_dates=["filing_date"], dtype={"symbol": str, "owner": str})
+    df["symbol"] = df["symbol"].fillna("")
+    return df
+
+
 def _cik_map(idir):
     p = os.path.join(idir, "company_tickers.json")
     try:
@@ -123,7 +131,7 @@ def load_insiders(tickers, cfg):
         if os.path.exists(cache) and os.path.getsize(cache) <= 2:
             os.remove(cache)  # an earlier failed download; try again
         if os.path.exists(cache) and not (recent and time.time() - os.path.getmtime(cache) > 7 * 86400):
-            frames.append(pd.read_csv(cache, parse_dates=["filing_date"]))
+            frames.append(_read_cache(cache))
             got += 1
             continue
         content = _download(name)
@@ -149,6 +157,9 @@ def load_insiders(tickers, cfg):
     if not frames:
         return {}, {"quarters": 0, "missing": missing}
     allf = pd.concat(frames, ignore_index=True)
+    allf["symbol"] = allf["symbol"].fillna("").astype(str)
+    # Same owner must count once whether its quarter came from cache or a fresh download.
+    allf["owner"] = allf["owner"].astype(str).str.strip().str.lstrip("0")
     cmap = _cik_map(idir)
     allf["ticker"] = [cmap.get(int(c), s.replace(".", "-")) for c, s in zip(allf["cik"], allf["symbol"])]
     want = set(tickers)
