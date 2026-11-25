@@ -1,8 +1,8 @@
-# Strategist report — 2026-11-24
+# Strategist report — 2026-11-25
 
-- Data: Yahoo Finance via yfinance (adjusted daily bars), 2018-01-02 → 2026-11-24, 985 tickers with usable history, earnings dates for 985
+- Data: Yahoo Finance via yfinance (adjusted daily bars), 2018-01-02 → 2026-11-25, 985 tickers with usable history, earnings dates for 985
 - Insider data (SEC Form 4 data sets): {"quarters": 35, "missing": ["2026q4_form345.zip"], "tickers": 820, "last_filing": "2026-09-30"}
-- In-sample: 2018-12-31 → 2024-03-21 · Out-of-sample: 2024-03-22 → 2026-11-24
+- In-sample: 2018-12-31 → 2024-03-22 · Out-of-sample: 2024-03-25 → 2026-11-25
 - Variants tested tonight (counted for deflated Sharpe): 22
 - Costs: 15 bps slippage per side, $0 commission · Capital $10,000 · risk 1.0%/trade
 - Pass bar: score ≥ 18/25, ≥ 30 OOS trades, positive OOS expectancy, positive under stress
@@ -11,11 +11,11 @@
 
 | # | Strategy | Score | OOS Sharpe | DSR | OOS trades | Avg R | Verdict |
 |---|---|---|---|---|---|---|---|
-| 1 | insider_cluster | 14/25 | 0.41 | 0.50 | 135 | +0.05 | FAIL |
-| 2 | pullback_regime | 10/25 | -0.24 | 0.15 | 762 | -0.01 | FAIL |
-| 3 | pullback_reversion | 10/25 | -0.26 | 0.15 | 863 | -0.01 | FAIL |
-| 4 | volume_breakout | 9/25 | -0.45 | 0.09 | 513 | -0.06 | FAIL |
-| 5 | earnings_drift | 9/25 | -0.88 | 0.02 | 281 | -0.11 | FAIL |
+| 1 | insider_cluster | 14/25 | 0.39 | 0.49 | 135 | +0.05 | FAIL |
+| 2 | pullback_regime | 10/25 | -0.27 | 0.13 | 762 | -0.01 | FAIL |
+| 3 | pullback_reversion | 10/25 | -0.33 | 0.11 | 869 | -0.02 | FAIL |
+| 4 | volume_breakout | 9/25 | -0.52 | 0.07 | 512 | -0.07 | FAIL |
+| 5 | earnings_drift | 9/25 | -0.87 | 0.02 | 282 | -0.11 | FAIL |
 
 ## insider_cluster — FAIL (14/25)
 
@@ -30,8 +30,8 @@
 
 | | In-sample | Out-of-sample | OOS stress (2× slip, 1 bar late) |
 |---|---|---|---|
-| Total return | -7.5% | +6.9% | +1.3% |
-| Sharpe | -0.14 | 0.41 | 0.11 |
+| Total return | -7.9% | +6.5% | +1.3% |
+| Sharpe | -0.14 | 0.39 | 0.11 |
 | Max drawdown | -16.3% | -7.0% | -12.7% |
 | Trades | 258 | 135 | 137 |
 | Win rate | 42% | 45% | 34% |
@@ -40,7 +40,7 @@
 
 **Walk-forward:** 11 windows, Sharpe -0.03, return -1.7%, 36% of windows profitable.
 **Monte Carlo (1,000 resamples of OOS trades):** median drawdown -5.8%, 95th-percentile -11.3%, worst -16.1%.
-**Deflated Sharpe:** 0.50 probability the edge is real after 22 trials.
+**Deflated Sharpe:** 0.49 probability the edge is real after 22 trials.
 **2020:** return -6.6%, max DD -15.5%, 68 trades (in-sample).
 **2022:** return -1.2%, max DD -5.6%, 49 trades (in-sample).
 **Market condition that breaks it:** downtrend/low-vol
@@ -54,7 +54,7 @@ Score: OOS Sharpe 2 · Deflated Sharpe 1 · Max DD 5 · Trade count 4 · Edge af
 - 2020: return -6.6%, max drawdown -15.5%.
 - 2022: return -1.2%, max drawdown -5.6%.
 - Fewer than 60% of walk-forward windows were profitable.
-- Deflated Sharpe 0.50 < 0.95 after counting 22 variants tried, so it could be luck.
+- Deflated Sharpe 0.49 < 0.95 after counting 22 variants tried, so it could be luck.
 - Weakest regime: downtrend/low-vol (avg R -0.53).
 
 ## pullback_regime — FAIL (10/25)
@@ -70,19 +70,19 @@ Score: OOS Sharpe 2 · Deflated Sharpe 1 · Max DD 5 · Trade count 4 · Edge af
 
 | | In-sample | Out-of-sample | OOS stress (2× slip, 1 bar late) |
 |---|---|---|---|
-| Total return | -24.7% | -9.4% | -46.1% |
-| Sharpe | -0.48 | -0.24 | -1.61 |
-| Max drawdown | -29.7% | -23.6% | -48.1% |
-| Trades | 892 | 762 | 781 |
+| Total return | -25.5% | -10.3% | -46.9% |
+| Sharpe | -0.51 | -0.27 | -1.64 |
+| Max drawdown | -30.5% | -24.5% | -48.7% |
+| Trades | 893 | 762 | 781 |
 | Win rate | 59% | 59% | 53% |
 | Avg R (after costs) | -0.03 | -0.01 | -0.08 |
-| Profit factor | 0.83 | 0.93 | 0.63 |
+| Profit factor | 0.82 | 0.93 | 0.62 |
 
-**Walk-forward:** 11 windows, Sharpe -0.35, return -21.2%, 27% of windows profitable.
-**Monte Carlo (1,000 resamples of OOS trades):** median drawdown -17.5%, 95th-percentile -31.1%, worst -47.8%.
-**Deflated Sharpe:** 0.15 probability the edge is real after 22 trials.
-**2020:** return -6.6%, max DD -19.5%, 171 trades (in-sample).
-**2022:** return -12.0%, max DD -13.2%, 49 trades (in-sample).
+**Walk-forward:** 11 windows, Sharpe -0.37, return -22.2%, 27% of windows profitable.
+**Monte Carlo (1,000 resamples of OOS trades):** median drawdown -17.6%, 95th-percentile -30.5%, worst -42.4%.
+**Deflated Sharpe:** 0.13 probability the edge is real after 22 trials.
+**2020:** return -7.9%, max DD -20.5%, 169 trades (in-sample).
+**2022:** return -10.5%, max DD -11.1%, 48 trades (in-sample).
 **Market gate (IJR > 200SMA) open:** 55% of in-sample days, 84% of out-of-sample days.
 **Market condition that breaks it:** uptrend/low-vol
 
@@ -92,10 +92,10 @@ Score: OOS Sharpe 1 · Deflated Sharpe 1 · Max DD 2 · Trade count 5 · Edge af
 - Survivorship bias: the universe is today's index members, so delisted losers are missing and results are flattered.
 - Float and market-cap filters aren't applied point in time in the backtest. The live Scout applies them from Robinhood fundamentals.
 - Edge disappears with double slippage + one bar late, so it's too fill-sensitive.
-- 2020: return -6.6%, max drawdown -19.5%.
-- 2022: return -12.0%, max drawdown -13.2%.
+- 2020: return -7.9%, max drawdown -20.5%.
+- 2022: return -10.5%, max drawdown -11.1%.
 - Fewer than 60% of walk-forward windows were profitable.
-- Deflated Sharpe 0.15 < 0.95 after counting 22 variants tried, so it could be luck.
+- Deflated Sharpe 0.13 < 0.95 after counting 22 variants tried, so it could be luck.
 - Weakest regime: uptrend/low-vol (avg R -0.05).
 
 ## pullback_reversion — FAIL (10/25)
@@ -111,19 +111,19 @@ Score: OOS Sharpe 1 · Deflated Sharpe 1 · Max DD 2 · Trade count 5 · Edge af
 
 | | In-sample | Out-of-sample | OOS stress (2× slip, 1 bar late) |
 |---|---|---|---|
-| Total return | -28.9% | -10.8% | -53.5% |
-| Sharpe | -0.42 | -0.26 | -1.90 |
-| Max drawdown | -35.9% | -29.4% | -54.5% |
-| Trades | 1384 | 863 | 890 |
+| Total return | -29.0% | -13.2% | -53.4% |
+| Sharpe | -0.42 | -0.33 | -1.89 |
+| Max drawdown | -36.2% | -29.5% | -54.4% |
+| Trades | 1387 | 869 | 890 |
 | Win rate | 59% | 58% | 52% |
-| Avg R (after costs) | -0.02 | -0.01 | -0.09 |
-| Profit factor | 0.87 | 0.93 | 0.59 |
+| Avg R (after costs) | -0.02 | -0.02 | -0.09 |
+| Profit factor | 0.87 | 0.91 | 0.59 |
 
-**Walk-forward:** 11 windows, Sharpe -0.50, return -33.8%, 36% of windows profitable.
-**Monte Carlo (1,000 resamples of OOS trades):** median drawdown -19.6%, 95th-percentile -33.3%, worst -44.1%.
-**Deflated Sharpe:** 0.15 probability the edge is real after 22 trials.
-**2020:** return -8.6%, max DD -28.3%, 247 trades (in-sample).
-**2022:** return -17.4%, max DD -20.7%, 231 trades (in-sample).
+**Walk-forward:** 11 windows, Sharpe -0.60, return -38.5%, 36% of windows profitable.
+**Monte Carlo (1,000 resamples of OOS trades):** median drawdown -20.4%, 95th-percentile -34.6%, worst -44.3%.
+**Deflated Sharpe:** 0.11 probability the edge is real after 22 trials.
+**2020:** return -9.7%, max DD -28.9%, 246 trades (in-sample).
+**2022:** return -17.6%, max DD -21.5%, 232 trades (in-sample).
 **Market condition that breaks it:** downtrend/high-vol
 
 Score: OOS Sharpe 1 · Deflated Sharpe 1 · Max DD 2 · Trade count 5 · Edge after costs 1 = **10/25**
@@ -132,11 +132,11 @@ Score: OOS Sharpe 1 · Deflated Sharpe 1 · Max DD 2 · Trade count 5 · Edge af
 - Survivorship bias: the universe is today's index members, so delisted losers are missing and results are flattered.
 - Float and market-cap filters aren't applied point in time in the backtest. The live Scout applies them from Robinhood fundamentals.
 - Edge disappears with double slippage + one bar late, so it's too fill-sensitive.
-- 2020: return -8.6%, max drawdown -28.3%.
-- 2022: return -17.4%, max drawdown -20.7%.
+- 2020: return -9.7%, max drawdown -28.9%.
+- 2022: return -17.6%, max drawdown -21.5%.
 - Fewer than 60% of walk-forward windows were profitable.
-- Deflated Sharpe 0.15 < 0.95 after counting 22 variants tried, so it could be luck.
-- Weakest regime: downtrend/high-vol (avg R -0.08).
+- Deflated Sharpe 0.11 < 0.95 after counting 22 variants tried, so it could be luck.
+- Weakest regime: downtrend/high-vol (avg R -0.07).
 
 ## volume_breakout — FAIL (9/25)
 
@@ -151,19 +151,19 @@ Score: OOS Sharpe 1 · Deflated Sharpe 1 · Max DD 2 · Trade count 5 · Edge af
 
 | | In-sample | Out-of-sample | OOS stress (2× slip, 1 bar late) |
 |---|---|---|---|
-| Total return | -15.3% | -23.9% | -29.3% |
-| Sharpe | -0.01 | -0.45 | -0.59 |
-| Max drawdown | -50.0% | -31.3% | -38.7% |
-| Trades | 948 | 513 | 520 |
-| Win rate | 46% | 43% | 38% |
-| Avg R (after costs) | +0.00 | -0.06 | -0.08 |
-| Profit factor | 0.96 | 0.85 | 0.83 |
+| Total return | -15.3% | -26.7% | -30.2% |
+| Sharpe | -0.01 | -0.52 | -0.62 |
+| Max drawdown | -50.4% | -32.7% | -38.1% |
+| Trades | 948 | 512 | 520 |
+| Win rate | 46% | 42% | 38% |
+| Avg R (after costs) | +0.00 | -0.07 | -0.08 |
+| Profit factor | 0.97 | 0.82 | 0.83 |
 
-**Walk-forward:** 11 windows, Sharpe -0.45, return -53.5%, 36% of windows profitable.
-**Monte Carlo (1,000 resamples of OOS trades):** median drawdown -32.1%, 95th-percentile -49.1%, worst -66.1%.
-**Deflated Sharpe:** 0.09 probability the edge is real after 22 trials.
-**2020:** return -21.0%, max DD -31.5%, 186 trades (in-sample).
-**2022:** return -27.1%, max DD -29.3%, 176 trades (in-sample).
+**Walk-forward:** 11 windows, Sharpe -0.47, return -54.9%, 36% of windows profitable.
+**Monte Carlo (1,000 resamples of OOS trades):** median drawdown -35.0%, 95th-percentile -52.0%, worst -66.5%.
+**Deflated Sharpe:** 0.07 probability the edge is real after 22 trials.
+**2020:** return -20.6%, max DD -31.0%, 185 trades (in-sample).
+**2022:** return -27.4%, max DD -29.5%, 176 trades (in-sample).
 **Market condition that breaks it:** downtrend/high-vol
 
 Score: OOS Sharpe 1 · Deflated Sharpe 1 · Max DD 1 · Trade count 5 · Edge after costs 1 = **9/25**
@@ -172,11 +172,11 @@ Score: OOS Sharpe 1 · Deflated Sharpe 1 · Max DD 1 · Trade count 5 · Edge af
 - Survivorship bias: the universe is today's index members, so delisted losers are missing and results are flattered.
 - Float and market-cap filters aren't applied point in time in the backtest. The live Scout applies them from Robinhood fundamentals.
 - Edge disappears with double slippage + one bar late, so it's too fill-sensitive.
-- 2020: return -21.0%, max drawdown -31.5%.
-- 2022: return -27.1%, max drawdown -29.3%.
+- 2020: return -20.6%, max drawdown -31.0%.
+- 2022: return -27.4%, max drawdown -29.5%.
 - Fewer than 60% of walk-forward windows were profitable.
-- Deflated Sharpe 0.09 < 0.95 after counting 22 variants tried, so it could be luck.
-- Weakest regime: downtrend/high-vol (avg R -0.25).
+- Deflated Sharpe 0.07 < 0.95 after counting 22 variants tried, so it could be luck.
+- Weakest regime: downtrend/high-vol (avg R -0.26).
 
 ## earnings_drift — FAIL (9/25)
 
@@ -191,20 +191,20 @@ Score: OOS Sharpe 1 · Deflated Sharpe 1 · Max DD 1 · Trade count 5 · Edge af
 
 | | In-sample | Out-of-sample | OOS stress (2× slip, 1 bar late) |
 |---|---|---|---|
-| Total return | -20.0% | -26.1% | -25.7% |
-| Sharpe | -0.31 | -0.88 | -0.80 |
-| Max drawdown | -29.9% | -33.9% | -35.5% |
-| Trades | 423 | 281 | 250 |
+| Total return | -22.5% | -25.9% | -26.2% |
+| Sharpe | -0.37 | -0.87 | -0.82 |
+| Max drawdown | -32.6% | -34.4% | -35.5% |
+| Trades | 425 | 282 | 250 |
 | Win rate | 46% | 42% | 42% |
-| Avg R (after costs) | -0.05 | -0.11 | -0.11 |
-| Profit factor | 0.85 | 0.76 | 0.72 |
+| Avg R (after costs) | -0.05 | -0.11 | -0.12 |
+| Profit factor | 0.84 | 0.76 | 0.72 |
 
-**Walk-forward:** 11 windows, Sharpe -0.45, return -24.7%, 45% of windows profitable.
-**Monte Carlo (1,000 resamples of OOS trades):** median drawdown -29.9%, 95th-percentile -43.0%, worst -55.7%.
+**Walk-forward:** 11 windows, Sharpe -0.42, return -23.0%, 45% of windows profitable.
+**Monte Carlo (1,000 resamples of OOS trades):** median drawdown -29.3%, 95th-percentile -43.4%, worst -55.4%.
 **Deflated Sharpe:** 0.02 probability the edge is real after 22 trials.
-**2020:** return -20.7%, max DD -22.3%, 77 trades (in-sample).
-**2022:** return +5.3%, max DD -9.6%, 80 trades (in-sample).
-**Market condition that breaks it:** downtrend/high-vol
+**2020:** return -21.6%, max DD -23.1%, 78 trades (in-sample).
+**2022:** return +6.7%, max DD -9.8%, 79 trades (in-sample).
+**Market condition that breaks it:** uptrend/high-vol
 
 Score: OOS Sharpe 1 · Deflated Sharpe 1 · Max DD 1 · Trade count 5 · Edge after costs 1 = **9/25**
 
@@ -212,7 +212,7 @@ Score: OOS Sharpe 1 · Deflated Sharpe 1 · Max DD 1 · Trade count 5 · Edge af
 - Survivorship bias: the universe is today's index members, so delisted losers are missing and results are flattered.
 - Float and market-cap filters aren't applied point in time in the backtest. The live Scout applies them from Robinhood fundamentals.
 - Edge disappears with double slippage + one bar late, so it's too fill-sensitive.
-- 2020: return -20.7%, max drawdown -22.3%.
+- 2020: return -21.6%, max drawdown -23.1%.
 - Fewer than 60% of walk-forward windows were profitable.
 - Deflated Sharpe 0.02 < 0.95 after counting 22 variants tried, so it could be luck.
-- Weakest regime: downtrend/high-vol (avg R -0.15).
+- Weakest regime: uptrend/high-vol (avg R -0.12).
